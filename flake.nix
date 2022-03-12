@@ -4,7 +4,7 @@
   nixConfig.bash-prompt = "[nix]λ ";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-21.05";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
 
     flake-utils = {
       url = "github:numtide/flake-utils";
@@ -43,7 +43,7 @@
             #ormolu                  # https://github.com/tweag/ormolu
           ];
 
-          withHoogle = true;
+          #withHoogle = true;
         };
       }
     );

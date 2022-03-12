@@ -11,37 +11,41 @@ final: prev:
     withPatch = flip appendPatch;
     withFlags = flip appendConfigureFlags;
 
-    haskellCompiler = "ghc884";
+    compilerVersion = "921";
+    compiler = "ghc" + compilerVersion;
   in {
-    myHaskellPackages = prev.haskell.packages.${haskellCompiler}.override {
+    myHaskellPackages = prev.haskell.packages.${compiler}.override {
       overrides = hpFinal: hpPrev:
         let
-          hakyll-src = hpPrev.callHackage "hakyll" "4.14.0.0" {};
-          pandoc-src = hpPrev.callHackage "pandoc" "2.11.4" {}; # version specified by hayll 4.14.0.0
-          slugger-src = hpPrev.callHackageDirect {
-            pkg = "slugger";
-            ver = "0.1.0.1";
-            sha256 = "sha256-ggeo5TcbI4UlK/CtG4878USX9Cm7Faz16phdjlDOGaI=";
-          } {}; # not available yet because it's so new
+          #hakyll-src = hpPrev.callHackage "hakyll" "4.14.0.0" {};
+          pandoc-src = hpPrev.callHackage "pandoc" "2.12" {};
+          #hakyll-src = hpPrev.callHackageDirect {
+          #  pkg = "hakyll";
+          #  ver = "4.15.1.1";
+          #  sha256 = "";
+          #} {};
         in rec {
-          hakyll = pipe hakyll-src [
-            doJailbreak
-            dontCheck
+          hakyll = pipe hpPrev.hakyll [
+            #doJailbreak
+            #dontCheck
             (withPatch ./hakyll.patch)
             (withFlags [ "-f" "watchServer" "-f" "previewServer" ])
           ];
 
-          pandoc = pipe pandoc-src [
-            doJailbreak
-            dontCheck
-          ];
+          haskell-language-server = prev.haskell-language-server.override {
+            supportedGhcVersions = [ compilerVersion ];
+          };
 
-          slugger = slugger-src;
+          pandoc = pandoc-src;
+
+          #pandoc = pipe pandoc-src [
+          #  doJailbreak
+          #  dontCheck
+          #];
 
           ssg = hpPrev.callCabal2nix "ssg" ./ssg {};
 
           website = prev.stdenv.mkDerivation {
-            #__contentAddressed = true; # uncomment if using cas: https://www.tweag.io/blog/2020-09-10-nix-cas/
             name = "website";
             buildInputs = [ ssg ];
             src = prev.nix-gitignore.gitignoreSourcePure [
