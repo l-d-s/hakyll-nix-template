@@ -11,18 +11,16 @@ final: prev:
     withPatch = flip appendPatch;
     withFlags = flip appendConfigureFlags;
 
-    haskellCompiler = "ghc884";
+    compilerVersion = "8107BinaryMinimal";
+    compiler = "ghc" + compilerVersion;
   in {
-    myHaskellPackages = prev.haskell.packages.${haskellCompiler}.override {
+    myHaskellPackages = prev.haskell.packages.${compiler}.override {
       overrides = hpFinal: hpPrev:
         let
           hakyll-src = hpPrev.callHackage "hakyll" "4.14.0.0" {};
           pandoc-src = hpPrev.callHackage "pandoc" "2.11.4" {}; # version specified by hayll 4.14.0.0
-          slugger-src = hpPrev.callHackageDirect {
-            pkg = "slugger";
-            ver = "0.1.0.1";
-            sha256 = "sha256-ggeo5TcbI4UlK/CtG4878USX9Cm7Faz16phdjlDOGaI=";
-          } {}; # not available yet because it's so new
+          pandoc-types-src = hpPrev.callHackage "pandoc-types" "1.22.1" {};
+          quickcheck-src = hpPrev.callHackage "QuickCheck" "2.14.2" {};
         in rec {
           hakyll = pipe hakyll-src [
             doJailbreak
@@ -31,12 +29,24 @@ final: prev:
             (withFlags [ "-f" "watchServer" "-f" "previewServer" ])
           ];
 
+          haskell-language-server = prev.haskell-language-server.override {
+            supportedGhcVersions = [ compilerVersion ];
+          };
+
           pandoc = pipe pandoc-src [
             doJailbreak
             dontCheck
           ];
 
-          slugger = slugger-src;
+          pandoc-types = pipe pandoc-types-src [
+            doJailbreak
+            dontCheck
+          ];
+
+          QuickCheck = pipe quickcheck-src [
+            doJailbreak
+            dontCheck
+          ];
 
           ssg = hpPrev.callCabal2nix "ssg" ./ssg {};
 
